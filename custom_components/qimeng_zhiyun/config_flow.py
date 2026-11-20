@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any
 
 import voluptuous as vol
@@ -90,6 +91,24 @@ def _mesh_schema(defaults: dict[str, Any], *, with_action: bool = False) -> vol.
             )
         )
     return vol.Schema(fields)
+
+
+def _normalize_api_transmitters(value: Any) -> list[dict[str, str]]:
+    """把 `IP|key` 多行文本（或已有列表）规范成 [{"host": ..., "key": ...}]。"""
+    entries: list[dict[str, str]] = []
+    if isinstance(value, str):
+        for line in value.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = [part for part in re.split(r"[|,;\s]+", line) if part]
+            if parts:
+                entries.append({"host": parts[0], "key": parts[1] if len(parts) > 1 else ""})
+    elif isinstance(value, list):
+        for item in value:
+            if isinstance(item, dict) and item.get("host"):
+                entries.append({"host": item["host"], "key": item.get("key") or ""})
+    return entries
 
 
 def _transmitter_schema(transport: str, defaults: dict[str, Any]) -> vol.Schema:
@@ -191,6 +210,10 @@ class QimengZhiyunConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         transport = self._defaults[CONF_TRANSMITTER_TYPE]
         if user_input is not None:
             data = {**self._defaults, **user_input}
+            if data.get(CONF_TRANSMITTER_TYPE) == TRANSPORT_API:
+                data[CONF_API_TRANSMITTERS] = _normalize_api_transmitters(
+                    data.get(CONF_API_TRANSMITTERS)
+                )
             return self.async_create_entry(
                 title=f"启明智云 FastCon（{TRANSPORT_LABELS.get(transport, transport)}）",
                 data=data,
@@ -248,9 +271,12 @@ class QimengZhiyunOptionsFlow(config_entries.OptionsFlow):
     async def async_step_transmitter(self, user_input: dict[str, Any] | None = None):
         transport = self._pending[CONF_TRANSMITTER_TYPE]
         if user_input is not None:
-            return self.async_create_entry(
-                title="", data={**self._pending, **user_input}
-            )
+            data = {**self._pending, **user_input}
+            if data.get(CONF_TRANSMITTER_TYPE) == TRANSPORT_API:
+                data[CONF_API_TRANSMITTERS] = _normalize_api_transmitters(
+                    data.get(CONF_API_TRANSMITTERS)
+                )
+            return self.async_create_entry(title="", data=data)
         return self.async_show_form(
             step_id="transmitter",
             data_schema=_transmitter_schema(transport, self._pending),
