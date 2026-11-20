@@ -7,7 +7,7 @@
 
 ## 安装
 
-- **HA 2026.11+**：内置 **Marketplace** → 添加自定义仓库 `hlhk2017/qimeng_zhiyun` → 安装（需先连接 GitHub）
+- **HA 2026.11+**：用内置的 **Marketplace** → 添加自定义仓库 `hlhk2017/qimeng_zhiyun` → 安装（需先连接 GitHub）。⚠️ 2026.11 起 **HACS 已经装不上了**，市场功能由 Marketplace 取代。
 - **HA 2026.11 之前**：HACS → 自定义仓库（类别选 Integration）→ 安装
 - 或手动把本目录复制到 `<config>/custom_components/qimeng_zhiyun/`
 
