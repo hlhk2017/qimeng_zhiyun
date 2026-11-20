@@ -1,0 +1,118 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "启明智云 FastCon 灯",
+        "description": "Enter the **Mesh Key** (8 hex chars / 4 bytes) of these FastCon lights. You can grab it with adb logcat (`jyq_helper ... key: XXXXXXXX`). The transmitter is a flashed ESP32.",
+        "data": {
+          "mesh_key": "Mesh Key (8 hex)",
+          "transmitter_type": "Transmitter type",
+          "adv_duration": "Advertisement duration (ms)",
+          "repeat_count": "Repeat count",
+          "light_style": "Light data format"
+        }
+      },
+      "transmitter": {
+        "title": "Transmitter",
+        "description": "Transmitter type: {transport}",
+        "data": {
+          "transmitter_entity": "ESPHome transmitter text entity",
+          "transmitter_service": "ESPHome user action service (esphome.xxx)",
+          "transmitter_device": "Device id (optional)",
+          "bluez_adapter": "BlueZ adapter",
+          "transmitter_entities": "Transmitter text entities (multi-select)"
+        }
+      }
+    },
+    "error": {
+      "invalid_mesh_key": "Mesh Key must be 8 hex characters, e.g. A1B2C3D4"
+    },
+    "abort": {
+      "already_configured": "Already configured",
+      "single_instance_allowed": "只允许一个实例"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "QimengZhiyun FastCon options",
+        "description": "修改 mesh key / 发射器，或手动添加一盏不在广播范围内的灯。",
+        "data": {
+          "mesh_key": "Mesh Key (8 hex)",
+          "transmitter_type": "Transmitter type",
+          "transmitter_entity": "ESPHome transmitter text entity",
+          "transmitter_service": "ESPHome user action service",
+          "transmitter_device": "Device id (optional)",
+          "bluez_adapter": "BlueZ adapter",
+          "adv_duration": "Advertisement duration (ms)",
+          "repeat_count": "Repeat count",
+          "action": "Action",
+          "light_style": "Light data format"
+        }
+      },
+      "add_light": {
+        "title": "Add a light manually",
+        "data": {
+          "light_id": "Light address / light_id (1-255)",
+          "name": "Name (optional)"
+        }
+      },
+      "scan": {
+        "title": "Discovered FastCon lights",
+        "description": "Found {count} device(s). Pick one and give the light_id (the App's \"address\").",
+        "data": {
+          "address": "Device",
+          "light_id": "Address / light_id (1-255)",
+          "name": "Name (optional)"
+        }
+      },
+      "scan_empty": {
+        "title": "No FastCon light found",
+        "description": "No FastCon advertisements seen. Make sure the bulb is powered and near the transmitter / Bluetooth proxy, or trigger a scan in the app."
+      },
+      "transmitter": {
+        "title": "Transmitter",
+        "description": "当前发射器类型：{transport}",
+        "data": {
+          "transmitter_entities": "Transmitter text entities (multi-select)",
+          "transmitter_service": "ESPHome user action service",
+          "transmitter_device": "Device id (optional)",
+          "bluez_adapter": "BlueZ adapter"
+        }
+      }
+    },
+    "error": {
+      "invalid_mesh_key": "Mesh Key 必须是 8 位十六进制",
+      "already_exists": "This light_id is already added"
+    }
+  },
+  "entity": {
+    "light": {
+      "light": {
+        "name": "灯"
+      }
+    }
+  },
+  "selector": {
+    "transmitter_type": {
+      "options": {
+        "text": "ESPHome transmitter (text entity)",
+        "service": "ESPHome transmitter (user action service)",
+        "bluez": "Local Bluetooth adapter (BlueZ)"
+      }
+    },
+    "options_action": {
+      "options": {
+        "save": "Save settings",
+        "add_light": "Add a light manually",
+        "scan": "Scan for nearby lights"
+      }
+    },
+    "light_style": {
+      "options": {
+        "standard": "Standard 6-byte (public protocol)",
+        "app": "App 7-byte (QimengZhiyun)"
+      }
+    }
+  }
+}
