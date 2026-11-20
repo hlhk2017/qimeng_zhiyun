@@ -168,7 +168,7 @@ class EsphomeApiTransmitter(FastconTransmitter):
                 try:
                     if self._client is None:
                         await self._async_connect()
-                    await self._client.text_command(self._text_key, value)
+                    self._client.text_command(self._text_key, value)
                     return
                 except Exception as err:  # noqa: BLE001
                     await self._async_close()
