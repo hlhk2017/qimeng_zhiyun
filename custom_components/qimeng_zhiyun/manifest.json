@@ -1,0 +1,19 @@
+{
+  "domain": "qimeng_zhiyun",
+  "name": "启明智云 FastCon 蓝牙灯",
+  "version": "0.1.0",
+  "documentation": "https://github.com/local/qimeng_zhiyun",
+  "issue_tracker": "https://github.com/local/qimeng_zhiyun/issues",
+  "codeowners": ["@local"],
+  "config_flow": true,
+  "dependencies": ["bluetooth"],
+  "after_dependencies": ["esphome"],
+  "integration_type": "hub",
+  "iot_class": "local_push",
+  "loggers": ["custom_components.qimeng_zhiyun"],
+  "bluetooth": [
+    {
+      "manufacturer_id": 65520
+    }
+  ]
+}
