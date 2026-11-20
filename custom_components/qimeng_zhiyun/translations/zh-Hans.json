@@ -1,0 +1,118 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "启明智云 FastCon 灯",
+        "description": "填写 App 里这组灯的 **Mesh Key**（8 位十六进制，4 字节）。可以用 adb logcat 抓 App 的 `jyq_helper ... key: XXXXXXXX` 得到。发射器选一块已刷好固件的 ESP32。",
+        "data": {
+          "mesh_key": "Mesh Key (8 位 hex)",
+          "transmitter_type": "发射器类型",
+          "adv_duration": "每条广播持续时间 (ms)",
+          "repeat_count": "每条命令重复次数",
+          "light_style": "灯控数据格式"
+        }
+      },
+      "transmitter": {
+        "title": "发射器设置",
+        "description": "当前发射器类型：{transport}",
+        "data": {
+          "transmitter_entity": "ESPHome 发射器 text 实体",
+          "transmitter_service": "ESPHome 用户动作服务 (esphome.xxx)",
+          "transmitter_device": "设备 ID（可留空）",
+          "bluez_adapter": "BlueZ 适配器",
+          "transmitter_entities": "发射器 text 实体（可多选，全屋代理一起广播）"
+        }
+      }
+    },
+    "error": {
+      "invalid_mesh_key": "Mesh Key 必须是 8 位十六进制，例如 A1B2C3D4"
+    },
+    "abort": {
+      "already_configured": "已经配置过了",
+      "single_instance_allowed": "只允许一个实例"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "启明智云 FastCon 设置",
+        "description": "修改 mesh key / 发射器，或手动添加一盏不在广播范围内的灯。",
+        "data": {
+          "mesh_key": "Mesh Key (8 位 hex)",
+          "transmitter_type": "发射器类型",
+          "transmitter_entity": "ESPHome 发射器 text 实体",
+          "transmitter_service": "ESPHome 用户动作服务",
+          "transmitter_device": "设备 ID（可留空）",
+          "bluez_adapter": "BlueZ 适配器",
+          "adv_duration": "广播持续时间 (ms)",
+          "repeat_count": "重复次数",
+          "action": "操作",
+          "light_style": "灯控数据格式"
+        }
+      },
+      "add_light": {
+        "title": "手动添加灯",
+        "data": {
+          "light_id": "灯泡地址 / light_id (1-255，App 里显示为「地址」)",
+          "name": "名称（可留空）"
+        }
+      },
+      "scan": {
+        "title": "发现附近的 FastCon 灯",
+        "description": "扫描到 {count} 个设备。选一个并为它指定 App 里的「地址」（light_id），保存后即会生成灯实体。",
+        "data": {
+          "address": "设备",
+          "light_id": "地址 / light_id (1-255)",
+          "name": "名称（可留空，默认用广播里的名字）"
+        }
+      },
+      "scan_empty": {
+        "title": "没有扫描到 FastCon 灯",
+        "description": "附近没有发现广播中的 FastCon 灯。请确认：灯泡通电且在发射器/蓝牙代理附近；或在手机 App 里点一次扫描唤醒灯泡。返回上一页可以选「手动添加一盏灯」。"
+      },
+      "transmitter": {
+        "title": "发射器设置",
+        "description": "当前发射器类型：{transport}",
+        "data": {
+          "transmitter_entities": "发射器 text 实体（可多选，全屋代理一起广播）",
+          "transmitter_service": "ESPHome 用户动作服务",
+          "transmitter_device": "设备 ID（可留空）",
+          "bluez_adapter": "BlueZ 适配器"
+        }
+      }
+    },
+    "error": {
+      "invalid_mesh_key": "Mesh Key 必须是 8 位十六进制",
+      "already_exists": "这个 light_id 已经添加过了"
+    }
+  },
+  "entity": {
+    "light": {
+      "light": {
+        "name": "灯"
+      }
+    }
+  },
+  "selector": {
+    "transmitter_type": {
+      "options": {
+        "text": "ESPHome 发射器（text 实体）",
+        "service": "ESPHome 发射器（用户动作服务）",
+        "bluez": "本机蓝牙适配器（BlueZ）"
+      }
+    },
+    "options_action": {
+      "options": {
+        "save": "保存设置",
+        "add_light": "手动添加一盏灯",
+        "scan": "扫描附近灯泡"
+      }
+    },
+    "light_style": {
+      "options": {
+        "standard": "标准 6 字节（公开协议）",
+        "app": "App 7 字节（启明智云反汇编）"
+      }
+    }
+  }
+}
