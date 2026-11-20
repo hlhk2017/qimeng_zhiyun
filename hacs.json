@@ -1,0 +1,7 @@
+{
+  "name": "启明智云 FastCon 蓝牙灯",
+  "content_in_root": false,
+  "render_readme": true,
+  "homeassistant": "2025.1.0",
+  "zip_release": false
+}
