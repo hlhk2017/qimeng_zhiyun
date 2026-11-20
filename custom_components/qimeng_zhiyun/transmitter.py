@@ -9,11 +9,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 
 from homeassistant.const import STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 
-from .const import TRANSPORT_BLUEZ, TRANSPORT_SERVICE, TRANSPORT_TEXT
+from .const import TRANSPORT_API, TRANSPORT_BLUEZ, TRANSPORT_SERVICE, TRANSPORT_TEXT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -76,6 +77,15 @@ class TextTransmitter(FastconTransmitter):
 class FanoutTransmitter(FastconTransmitter):
     """把同一条 payload 同时交给多个发射器（不同房间的代理都能广播）。"""
 
+    async def async_close(self) -> None:
+        for t in self.transmitters:
+            close = getattr(t, "_async_close", None)
+            if close is not None:
+                try:
+                    await close()
+                except Exception:  # noqa: BLE001
+                    pass
+
     def __init__(self, transmitters: list[FastconTransmitter]) -> None:
         super().__init__(transmitters[0].hass, transmitters[0].adv_duration, 1)
         self.transmitters = transmitters
@@ -98,6 +108,72 @@ class FanoutTransmitter(FastconTransmitter):
             )
             if len(errors) == len(results):
                 raise TransmitError("所有发射器都发送失败")
+
+
+class EsphomeApiTransmitter(FastconTransmitter):
+    """直连 ESPHome 设备的原生 API，直接调它的 text 实体。
+
+    比依赖 HA 的 ESPHome 集成更稳：HA 里那些 mDNS 发现来的 esphome 条目常常
+    `not_loaded`（本机就有 29 个这种），但设备本身的 6053 端口是通的。
+    """
+
+    def __init__(self, hass, host: str, psk: str | None = None, adv_duration=60, repeat=2) -> None:
+        super().__init__(hass, adv_duration, repeat)
+        self.host = host
+        self.psk = psk or None
+        self._client = None
+        self._text_key: int | None = None
+        self._lock = asyncio.Lock()
+
+    def describe(self) -> str:
+        return f"espapi:{self.host}"
+
+    async def _async_connect(self) -> None:
+        from aioesphomeapi import APIClient
+
+        client = APIClient(self.host, 6053, None, noise_psk=self.psk)
+        await client.connect(login=True)
+        try:
+            entities, _services = await client.list_entities_services()
+        except Exception:  # noqa: BLE001
+            await client.disconnect()
+            raise
+        text_key = None
+        for entity in entities:
+            object_id = getattr(entity, "object_id", "") or ""
+            if object_id == "fastcon_payload" or (
+                "FastCon Payload" in (getattr(entity, "name", "") or "")
+            ):
+                text_key = entity.key
+                break
+        if text_key is None:
+            await client.disconnect()
+            raise TransmitError(f"{self.host} 上没有 FastCon Payload 实体（固件没刷对？）")
+        self._client = client
+        self._text_key = text_key
+
+    async def _async_close(self) -> None:
+        client, self._client = self._client, None
+        self._text_key = None
+        if client is not None:
+            try:
+                await client.disconnect()
+            except Exception:  # noqa: BLE001
+                pass
+
+    async def async_send(self, payload: bytes) -> None:
+        value = payload.hex()
+        async with self._lock:
+            for attempt in (1, 2):
+                try:
+                    if self._client is None:
+                        await self._async_connect()
+                    await self._client.text_command(self._text_key, value)
+                    return
+                except Exception as err:  # noqa: BLE001
+                    await self._async_close()
+                    if attempt == 2:
+                        raise TransmitError(f"{self.host} 发送失败: {err}") from err
 
 
 class ServiceTransmitter(FastconTransmitter):
@@ -254,6 +330,33 @@ def build_transmitter(hass: HomeAssistant, options: dict) -> FastconTransmitter:
             adv_duration,
             repeat,
         )
+    if transport == TRANSPORT_API:
+        raw = options.get("api_transmitters") or []
+        entries: list[dict] = []
+        if isinstance(raw, str):
+            for line in raw.splitlines():
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = [p.strip() for p in re.split(r"[|,;\s]+", line) if p.strip()]
+                if not parts:
+                    continue
+                entries.append({"host": parts[0], "key": parts[1] if len(parts) > 1 else ""})
+        else:
+            entries = [dict(item) for item in raw if isinstance(item, dict)]
+        if not entries:
+            raise TransmitError("未配置 ESPHome 设备（API 直连）")
+        transmitters = [
+            EsphomeApiTransmitter(hass, item["host"], item.get("key") or None, adv_duration, repeat)
+            for item in entries
+            if item.get("host")
+        ]
+        if not transmitters:
+            raise TransmitError("未配置有效的 ESPHome 设备地址")
+        if len(transmitters) == 1:
+            return transmitters[0]
+        return FanoutTransmitter(transmitters)
+
     if transport == TRANSPORT_BLUEZ:
         return BluezTransmitter(
             hass,
