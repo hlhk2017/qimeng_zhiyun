@@ -1,0 +1,42 @@
+send_raw:
+  name: 发送原始广播 Payload
+  description: 把一段已经算好的 FastCon 厂商数据(0xFFF0) hex 原样通过发射器广播出去，用于调试验证。
+  fields:
+    payload:
+      name: Payload (hex)
+      description: 十六进制串，例如 6DB64368931DDD05071A4BAB079065A1D207D98F（最长 24 字节）。
+      required: true
+      example: "6DB64368931DDD05071A4BAB079065A1D207D98F"
+      selector:
+        text:
+    entry_id:
+      name: 配置项 ID
+      description: 有多个 mesh 时可指定；留空用第一个。
+      required: false
+      selector:
+        text:
+send_light:
+  name: 发送单灯控制
+  description: 按 light_id + light_data 构造 FastCon 帧并广播，用于调试（无需先建灯实体）。
+  fields:
+    light_id:
+      name: 灯泡地址 (light_id)
+      description: App「设备详情」里的「地址」，1-255。
+      required: true
+      example: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+    light_data:
+      name: light_data (hex)
+      description: 1 或 6 字节，例如 80(开灯全亮) / 00(关灯) / FF00FF000000(RGB 红)。
+      required: true
+      example: "80"
+      selector:
+        text:
+    entry_id:
+      name: 配置项 ID
+      required: false
+      selector:
+        text:
