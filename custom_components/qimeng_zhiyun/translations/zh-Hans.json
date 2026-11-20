@@ -20,7 +20,8 @@
           "transmitter_service": "ESPHome 用户动作服务 (esphome.xxx)",
           "transmitter_device": "设备 ID（可留空）",
           "bluez_adapter": "BlueZ 适配器",
-          "transmitter_entities": "发射器 text 实体（可多选，全屋代理一起广播）"
+          "transmitter_entities": "发射器 text 实体（可多选，全屋代理一起广播）",
+          "api_transmitters": "ESPHome 设备列表（每行 IP|api加密key）"
         }
       }
     },
@@ -77,7 +78,8 @@
           "transmitter_entities": "发射器 text 实体（可多选，全屋代理一起广播）",
           "transmitter_service": "ESPHome 用户动作服务",
           "transmitter_device": "设备 ID（可留空）",
-          "bluez_adapter": "BlueZ 适配器"
+          "bluez_adapter": "BlueZ 适配器",
+          "api_transmitters": "ESPHome 设备列表（每行 IP|api加密key）"
         }
       }
     },
