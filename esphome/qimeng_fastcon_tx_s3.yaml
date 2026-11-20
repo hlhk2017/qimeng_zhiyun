@@ -1,0 +1,97 @@
+# 启蒙彩灯 (Broadlink FastCon / brMesh) BLE 广播发射器 —— ESP32-S3 版
+#
+# 与 qimeng_fastcon_tx.yaml 完全相同的固件，只换了板型和设备名（避免两者
+# 编译产物互相覆盖）。如果你拿到的是 ESP32-S3 板子，就刷这个文件。
+# 控制入口：text 实体 "FastCon Payload"，HA 里用 text.set_value 写十六进制串。
+#
+# 协议构造全部在 HA 侧完成，固件不含 mesh_key。
+# 刷机说明见同目录 qimeng-fastcon-tx-README.md
+
+substitutions:
+  device_name: qimeng-fastcon-tx-s3
+  friendly_name: 启蒙 FastCon BLE 发射器 (S3)
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  comment: "FastCon/brMesh BLE 广播发射器（无密钥，payload 由 HA 生成）"
+
+esp32:
+  board: esp32-s3-devkitc-1
+  # 直接使用 ESPHome 管理的 ESP-IDF 工具链，复用数据目录里已装好的 ESP-IDF 5.5.5，
+  # 不走 PlatformIO 下载 pioarduino 平台包（首次编译更快、无额外下载）。
+  # 若你的 ESPHome 版本太老不认 toolchain 选项，把 toolchain / version 两行删掉即可回退到 PIO。
+  toolchain: esp-idf
+  framework:
+    type: esp-idf
+    version: 5.5.5
+
+logger:
+  level: INFO
+
+esp32_ble:
+  enable_on_boot: true
+
+# 同时当蓝牙代理（HA「蓝牙」集成里多一个扫描器，灯只能靠 BLE 广播被发现）。
+# 只给 10% 扫描占空比，留时间给广播发射；丢命令就把 window 降到 50ms。
+esp32_ble_tracker:
+  scan_parameters:
+    interval: 1000ms
+    window: 100ms
+    active: false
+
+bluetooth_proxy:
+  active: false
+
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [fastcon_tx]
+
+fastcon_tx:
+  id: fastcon_tx_1
+  adv_duration: 50
+  adv_gap: 10
+  repeat_count: 2
+  tx_power: 9
+
+api:
+  encryption:
+    key: "5Jzf76a/ouCGvQcCQlkTr5kJ/jmMUh7AXhLjUpQ3xDs="
+  actions:
+    - action: fastcon_send
+      variables:
+        payload: string
+      then:
+        - fastcon_tx.send:
+            payload: !lambda 'return payload;'
+
+ota:
+  - platform: esphome
+    password: "08c1365982b53683f5b46f78aae3e5d4"
+
+wifi:
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+  ap:
+    ssid: "FastCon-TX-S3-Fallback"
+    password: "s3fallbk"
+
+captive_portal:
+
+text:
+  # HA 侧唯一实用入口：HA 用 text.set_value 写十六进制串（最长 24 字节 = 48 hex 字符）
+  - platform: template
+    id: fastcon_payload
+    name: "FastCon Payload"
+    icon: mdi:broadcast
+    optimistic: true
+    restore_value: false
+    mode: text
+    min_length: 0
+    max_length: 64
+    on_value:
+      - lambda: |-
+          id(fastcon_tx_1).send_hex(x);
