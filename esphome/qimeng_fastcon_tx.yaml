@@ -1,0 +1,117 @@
+# 启蒙彩灯 (Broadlink FastCon / brMesh) BLE 广播发射器 —— ESP32-C3 版
+#
+# 这是一台"哑"发射器：它不含 mesh_key、不做任何 FastCon 协议计算，只把 HA 集成
+# 算好的 BLE 厂商数据(0xFFF0)十六进制串原样广播出去。协议构造全部在 HA 侧完成。
+#
+# 控制入口：text 实体 "FastCon Payload"（HA 里是
+#   text.qimeng_fastcon_tx_fastcon_payload），用 text.set_value 写十六进制串即可广播一次。
+# （yaml 里保留了 api: actions: fastcon_send，但实测 ESPHome 集成的用户动作不会在 HA
+#   里暴露成 esphome.* 服务，所以别依赖它；text 实体才是 HA 侧唯一实用入口。）
+#
+# 板型：ESP32-C3 (esp32-c3-devkitm-1)。S3 版本见 qimeng_fastcon_tx_s3.yaml。
+# 刷机说明见同目录 qimeng-fastcon-tx-README.md
+
+substitutions:
+  device_name: qimeng-fastcon-tx
+  friendly_name: 启蒙 FastCon BLE 发射器
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  comment: "FastCon/brMesh BLE 广播发射器（无密钥，payload 由 HA 生成）"
+
+esp32:
+  board: esp32-c3-devkitm-1
+  # 直接使用 ESPHome 管理的 ESP-IDF 工具链，复用数据目录里已装好的 ESP-IDF 5.5.5，
+  # 不走 PlatformIO 下载 pioarduino 平台包（首次编译更快、无额外下载）。
+  # 若你的 ESPHome 版本太老不认 toolchain 选项，把 toolchain / version 两行删掉即可回退到 PIO。
+  toolchain: esp-idf
+  framework:
+    type: esp-idf
+    version: 5.5.5
+
+logger:
+  level: INFO
+
+# BLE 控制器：初始化协议栈。
+# 注意：不要加 esp32_ble_server —— 它会自己 start_advertising，和本组件的原始广播冲突。
+esp32_ble:
+  enable_on_boot: true
+
+# 同时当蓝牙代理（HA 侧「蓝牙」集成里会多一个扫描器，用来自动发现灯）。
+# 灯的发现只能靠 BLE 广播，所以这块板子放灯旁边当扫描器最有价值。
+# 权衡：扫描和广播共用射频。这里只给 10% 占空比（window 100ms / interval 1000ms），
+# 留 90% 时间给广播发射；若实测偶尔丢命令，再把 window 降到 50ms。
+esp32_ble_tracker:
+  scan_parameters:
+    interval: 1000ms
+    window: 100ms
+    active: false
+
+bluetooth_proxy:
+  active: false
+
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [fastcon_tx]
+
+# 组件参数（都可省略，下面的值就是已验证可用的默认值）。
+# 注意：实测灯泡**不挑广播 PDU 形状** —— 之前灯不响应的真因是帧内容（data 段要补零到 12 字节、
+# header 低 4 位放 light_id 低 4 位），跟 NONCONN_IND/0x1A 还是 ADV_IND/0x02 无关。
+# 所以这里保持已验证的 NONCONN_IND + flags 0x1A；adv_connectable / adv_flags 留作实验用。
+fastcon_tx:
+  id: fastcon_tx_1
+  adv_duration: 50         # 每帧在空中持续多少 ms
+  adv_gap: 10              # 两条广播之间的间隔 ms
+  repeat_count: 2          # 每帧重复广播几次（灯泡可能漏听）
+  # adv_connectable: true  # 想试手机那种可连接 ADV_IND 时打开；默认 false = ADV_NONCONN_IND
+  # adv_flags: 0x02        # 默认 0x1A；手机用 0x02，对灯无差别
+  # adv_interval_min: 0x20
+  # adv_interval_max: 0x40
+  tx_power: 9              # 广播发射功率 dBm，可选 -12/-9/-6/-3/0/3/6/9
+
+api:
+  encryption:
+    key: "vRn8TAVnC7l9P/sDetumzCvH7bJ3HM+3u4mR9yiRefs="
+  actions:
+    # HA: esphome.qimeng_fastcon_tx_fastcon_send(payload="<hex>")
+    - action: fastcon_send
+      variables:
+        payload: string
+      then:
+        - fastcon_tx.send:
+            payload: !lambda 'return payload;'
+
+ota:
+  - platform: esphome
+    password: "8198af7ade861449cc2502f46160ac31"
+
+wifi:
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+  ap:
+    ssid: "FastCon-TX-Fallback"
+    password: "zt5omzwm"
+
+captive_portal:
+
+text:
+  # 这是 HA 侧唯一实用的入口：HA 用 text.set_value 往这里写十六进制串。
+  # HA 里的 entity_id（设备名 qimeng-fastcon-tx + 实体名 FastCon Payload）：
+  #   text.qimeng_fastcon_tx_fastcon_payload
+  # 最长 24 字节 payload = 48 个 hex 字符；这里给 64，留余量。
+  - platform: template
+    id: fastcon_payload
+    name: "FastCon Payload"
+    icon: mdi:broadcast
+    optimistic: true
+    restore_value: false
+    mode: text
+    min_length: 0
+    max_length: 64
+    on_value:
+      - lambda: |-
+          id(fastcon_tx_1).send_hex(x);
