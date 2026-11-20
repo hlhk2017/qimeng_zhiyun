@@ -53,12 +53,11 @@ ESPHome 蓝牙代理也只能收不能发）。所以必须有一个**能广播�
 3. Marketplace → **添加自定义仓库** → 填 `hlhk2017/qimeng_zhiyun`
 4. 安装 **启明智云 FastCon 蓝牙灯** → 重启 Home Assistant
 
-> 仓库根目录带 `hacs.json`（Marketplace 要求），且**不使用 ZIP release**（Marketplace 不支持从
-> zip release 安装集成），因此可以直接从仓库内容安装到 `custom_components/qimeng_zhiyun/`。
+
 
 ### 方式二：HACS（仅 **2026.11 之前**）
 
-> ⚠️ **HA 2026.11 及以后 HACS 无法安装**（不再兼容），请用上面的 Marketplace；下面步骤只对旧版本有效。
+> ⚠️ **HA 2026.11 及以后 HACS 无法安装**），请用上面的 Marketplace；下面步骤只对旧版本有效。
 
 1. HACS → 集成 → ⋮ → **自定义仓库**：填本仓库地址，类别选 **Integration**
 2. 搜索安装 **启明智云 FastCon 蓝牙灯** → 重启 HA
