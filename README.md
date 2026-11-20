@@ -37,27 +37,31 @@ ESPHome 蓝牙代理也只能收不能发）。所以必须有一个**能广播�
 
 ## 安装
 
-> **Home Assistant 2026.11 起有变化**：HA 内置了 **Marketplace**（集成商店，可替代 HACS 的
-> "自定义仓库 → 安装集成"流程）。2026.11 之前只能走 HACS 或手动。
+> **Home Assistant 2026.11 起安装方式有变化**：HA 内置了 **Marketplace**（集成商店），
+> **HACS 从 2026.11 起已经装不上了**（HACS 不再兼容新版本，市场功能由内置 Marketplace 取代）。
+>
+> 也就是说：
+> - **2026.11 及以上**：只能用 **Marketplace**（在 HA 里直接添加自定义仓库）
+> - **2026.11 之前**：用 HACS，或手动复制
 
-### 方式一：Marketplace（HA **2026.11 及以上**，推荐）
+### 方式一：Marketplace（HA **2026.11 及以上**）
 
-1. **设置 → 设备与服务 → 添加集成 → Marketplace**
-2. 首次使用会提示 **连接 GitHub**：点继续 → 打开给出的网址 → 输入设备码 → 授权。
-   （只读取公开信息，不需要密码，可随时在 GitHub 撤销；不连接 GitHub 也能浏览官方目录，
-   但**添加自定义仓库需要连接**，否则会受 GitHub 匿名请求频率限制）
+1. 打开 **Marketplace**（HA 2026.11 起内置，不需要安装 HACS；入口在 HA 的市场/侧边栏区域）
+2. 首次使用需要 **连接 GitHub**：点继续 → 打开给出的网址 → 输入设备码 → 授权。
+   （只读取公开信息、不需要密码，可随时在 GitHub 撤销；不连接也能浏览官方目录，
+   但**添加自定义仓库需要连接**，否则受 GitHub 匿名请求频率限制）
 3. Marketplace → **添加自定义仓库** → 填 `hlhk2017/qimeng_zhiyun`
 4. 安装 **启明智云 FastCon 蓝牙灯** → 重启 Home Assistant
 
-> 这个仓库根目录带 `hacs.json`（Marketplace 要求），并**不使用 ZIP release**（Marketplace 不支持从
-> zip release 安装集成），所以它能直接从仓库内容安装到 `custom_components/qimeng_zhiyun/`。
+> 仓库根目录带 `hacs.json`（Marketplace 要求），且**不使用 ZIP release**（Marketplace 不支持从
+> zip release 安装集成），因此可以直接从仓库内容安装到 `custom_components/qimeng_zhiyun/`。
 
-### 方式二：HACS（2026.11 之前，或继续用 HACS）
+### 方式二：HACS（仅 **2026.11 之前**）
+
+> ⚠️ **HA 2026.11 及以后 HACS 无法安装**（不再兼容），请用上面的 Marketplace；下面步骤只对旧版本有效。
 
 1. HACS → 集成 → ⋮ → **自定义仓库**：填本仓库地址，类别选 **Integration**
 2. 搜索安装 **启明智云 FastCon 蓝牙灯** → 重启 HA
-
-> HACS 要求仓库根目录 `hacs.json` + `custom_components/<domain>/manifest.json`，本仓库都满足。
 
 ### 方式三：手动
 
