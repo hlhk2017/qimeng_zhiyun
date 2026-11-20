@@ -119,7 +119,7 @@ def parse_advertisement(
 
     # 单灯控制/状态帧：data[0] 低 4 位 = 2，data[1] = light_id
     if data and (data[0] & 0x0F) == 2 and len(data) >= 2:
-        status.light_id = data[1] | (light_id_high << 8)
+        status.light_id = data[1]
 
     # 组帧：低 4 位 = 3，后面是 0x2A 0xA8 group
     elif data and (data[0] & 0x0F) == 3 and len(data) >= 4 and data[1] == 0x2A:
