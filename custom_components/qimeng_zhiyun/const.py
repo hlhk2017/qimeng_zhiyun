@@ -10,6 +10,7 @@ CONF_MESH_KEY = "mesh_key"
 CONF_TRANSMITTER_TYPE = "transmitter_type"
 CONF_TRANSMITTER_ENTITY = "transmitter_entity"
 CONF_TRANSMITTER_ENTITIES = "transmitter_entities"
+CONF_API_TRANSMITTERS = "api_transmitters"   # [{"host": "192.168.2.21", "key": "<noise_psk>"}]
 CONF_TRANSMITTER_SERVICE = "transmitter_service"
 CONF_TRANSMITTER_DEVICE = "transmitter_device"
 CONF_BLUEZ_ADAPTER = "bluez_adapter"
@@ -21,6 +22,7 @@ CONF_LIGHT_STYLE = "light_style"
 TRANSPORT_TEXT = "text"
 TRANSPORT_SERVICE = "service"
 TRANSPORT_BLUEZ = "bluez"
+TRANSPORT_API = "api"
 
 STYLE_STANDARD = "standard"
 STYLE_APP = "app"
@@ -34,6 +36,7 @@ TRANSPORT_LABELS = {
     TRANSPORT_TEXT: "ESPHome 发射器（text 实体，可多选）",
     TRANSPORT_TEXT: "ESPHome 发射器（text 实体）",
     TRANSPORT_SERVICE: "ESPHome 发射器（用户动作服务）",
+    TRANSPORT_API: "ESPHome 设备（直连 API，最稳）",
     TRANSPORT_BLUEZ: "本机蓝牙适配器（BlueZ）",
 }
 
