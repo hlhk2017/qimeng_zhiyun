@@ -14,6 +14,7 @@ from homeassistant.helpers import config_validation as cv, selector
 from .const import (
     CONF_ADV_DURATION,
     CONF_LIGHT_STYLE,
+    CONF_API_TRANSMITTERS,
     CONF_TRANSMITTER_ENTITIES,
     CONF_BLUEZ_ADAPTER,
     CONF_LIGHTS,
@@ -30,6 +31,7 @@ from .const import (
     DEFAULT_STYLE,
     DOMAIN,
     STYLE_LABELS,
+    TRANSPORT_API,
     TRANSPORT_BLUEZ,
     TRANSPORT_LABELS,
     TRANSPORT_SERVICE,
@@ -101,7 +103,8 @@ def _transmitter_schema(transport: str, defaults: dict[str, Any]) -> vol.Schema:
             return vol.Schema(
                 {
                     vol.Required(
-                        CONF_TRANSMITTER_ENTITIES, default=current
+                        CONF_API_TRANSMITTERS,
+    CONF_TRANSMITTER_ENTITIES, default=current
                     ): selector.EntitySelector(selector_config)
                 }
             )
@@ -125,6 +128,31 @@ def _transmitter_schema(transport: str, defaults: dict[str, Any]) -> vol.Schema:
                 ): cv.string,
             }
         )
+    if transport == TRANSPORT_API:
+        current = defaults.get(CONF_API_TRANSMITTERS) or []
+        if isinstance(current, list):
+            text_value = "\n".join(
+                f"{item.get('host', '')}|{item.get('key', '')}"
+                for item in current
+                if isinstance(item, dict) and item.get("host")
+            )
+        else:
+            text_value = str(current)
+        field = (
+            vol.Required(CONF_API_TRANSMITTERS, default=text_value)
+            if text_value
+            else vol.Required(CONF_API_TRANSMITTERS)
+        )
+        return vol.Schema(
+            {
+                field: selector.TextSelector(
+                    selector.TextSelectorConfig(
+                        multiline=True, type=selector.TextSelectorType.TEXT
+                    )
+                )
+            }
+        )
+
     return vol.Schema(
         {
             vol.Required(
